@@ -15,6 +15,10 @@ import { Icon } from 'leaflet'
 import 'leaflet/dist/leaflet.css'
 import 'leaflet-draw/dist/leaflet.draw.css'
 
+// Vue Babylon
+import vb from 'vue-babylonjs';
+Vue.use(vb);
+
 Vue.component('l-map', LMap);
 Vue.component('l-tile-layer', LTileLayer);
 Vue.component('l-marker', LMarker);
