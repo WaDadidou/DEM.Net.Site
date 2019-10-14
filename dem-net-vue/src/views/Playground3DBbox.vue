@@ -99,8 +99,8 @@
                 </b-progress>
               </p>
               <div class="glbcontent">
-                <Scene>
-                  <Asset src="https://api.elevationapi.com/gltf/20191011/800004de-0006-f400-b63f-84710c7967bb.stl" scaling="[0.002, 0.002, 0.002]" v-model="myAssetRoot"></Asset>
+                <Scene v-if="glbFile && this.requestParams.format == 'glTF'">
+                  <Asset  :src="glbFile" :scaling="[0.00002, 0.00002, 0.00002]"></Asset>
                 </Scene>
                 <!-- <model-gltf :content="glbFile"></model-gltf> -->
                 <model-gltf
