@@ -22,31 +22,6 @@
                     {{ gpxFile.name }}
                 </span>
             </b-field>
-            <!-- <b-field label="Or choose one of the demo files..." class="level-item">
-            <b-select v-model="demoGpxFile" placeholder="Demo GPX files" icon-pack="fas" icon="folder-open" class="title" @input="loadDemoFile">
-                <optgroup label="Europe">
-                    <option value="./assets/gpx/BikeRide.gpx">Bike Ride, Aubagne</option>
-                    <option value="silver">Silver</option>
-                    <option value="vane">Vane</option>
-                    <option value="billy">Billy</option>
-                    <option value="jack">Jack</option>
-                </optgroup>
-
-                <optgroup label="Breaking Bad">
-                    <option value="heisenberg">Heisenberg</option>
-                    <option value="jesse">Jesse</option>
-                    <option value="saul">Saul</option>
-                    <option value="mike">Mike</option>
-                </optgroup>
-
-                <optgroup label="Game of Thrones">
-                    <option value="tyrion-lannister">Tyrion Lannister</option>
-                    <option value="jamie-lannister">Jamie Lannister</option>
-                    <option value="daenerys-targaryen">Daenerys Targaryen</option>
-                    <option value="jon-snow">Jon Snow</option>
-                </optgroup>
-            </b-select>
-        </b-field> -->
             </nav>
 
             <div class="columns">
@@ -66,7 +41,6 @@
               <div class="column" v-show="showTextureOptions">
                 <b-field label="Use imagery texture">
                     <b-switch v-model="requestParams.textured">
-                        {{ requestParams.textured }}
                     </b-switch>
                 </b-field>
                 <ImagerySelector v-show="showTextureOptionsProvider" :provider="requestParams.imageryProvider" 
@@ -83,15 +57,24 @@
               <div class="column" v-show="false">
                 <b-field label="Generate TIN" v-if="this.requestParams.format == 'glTF'">
                     <b-switch v-model="requestParams.generateTIN">
-                        {{ requestParams.generateTIN }}
                     </b-switch>
+                </b-field>
+              </div>
+              <!-- 3D track -->
+              <div class="column">
+                <b-field label="3D track">
+                    <b-tooltip :label="track3Ddescription"
+                        position="is-bottom" type="is-light"
+                        animated multilined>
+                        <b-switch v-model="requestParams.track3D">
+                    </b-switch>
+                    </b-tooltip>
                 </b-field>
               </div>
               <!-- rotate -->
               <div class="column">
                 <b-field label="Rotate model">
                     <b-switch v-model="enableRotation">
-                        {{ enableRotation }}
                     </b-switch>
                 </b-field>
               </div>
@@ -108,6 +91,8 @@
 
             <!-- Buttons -->
               <nav class="level is-mobile">
+
+                <!-- Generation -->
                 <div class="level-item has-text-centered">
                   <div>
                     <b-button @click="upload" :disabled="!gpxFile" icon-pack="fas" icon-left="fas fa-globe-americas">
@@ -115,9 +100,36 @@
                     </b-button>              
                   </div>
                 </div>
+                <!-- Textures -->
+                <div class="level-item has-text-centered">
+                  <b-dropdown hoverable aria-role="list" :disabled="!this.glbFile">
+                            <button class="button" slot="trigger">
+                                <b-icon pack="fas" icon="images"></b-icon>
+                                <span>Download textures</span>
+                            </button>
+                            <b-dropdown-item has-link aria-role="menuitem" v-if="this.textureFiles.heightMap">
+                                <a :href="this.textureFiles.heightMap" target="_blank" rel="noopener noreferrer">
+                                    <b-icon pack="fas" icon="image"></b-icon>
+                                    Height map
+                                </a>
+                            </b-dropdown-item>
+                            <b-dropdown-item has-link aria-role="menuitem" v-if="this.textureFiles.normalMap">
+                                <a :href="this.textureFiles.normalMap" target="_blank" rel="noopener noreferrer">
+                                    <b-icon pack="fas" icon="image"></b-icon>
+                                    Normal map
+                                </a>
+                            </b-dropdown-item>
+                             <b-dropdown-item has-link aria-role="menuitem" v-if="this.textureFiles.albedo">
+                                <a :href="this.textureFiles.albedo" target="_blank" rel="noopener noreferrer">
+                                    <b-icon pack="fas" icon="image"></b-icon>
+                                    Albedo (imagery)
+                                </a>
+                            </b-dropdown-item>
+                        </b-dropdown>
+                </div>
+                <!-- Download -->
                 <div class="level-item has-text-centered">
                   <div>
-
                     <b-button icon-pack="fas" icon-left="fas fa-download"  :disabled="!this.glbFile">
                       <a :disabled="!this.glbFile" :href="this.glbFile" @click="modelDownload">
                         Download model
@@ -127,7 +139,6 @@
                   </div>
                 </div>
               </nav>
-
             <p>
                   <b-progress v-show="serverProgress" :value="serverProgressPercent" size="is-large" :type="progressType"  show-value>
                   <span style="color: black">{{ serverProgress }}</span>
@@ -193,7 +204,13 @@ export default {
           imageryProvider: "Esri.WorldImagery",
           textureQuality: 2,
           format: "glTF",
-          zFactor: 1
+          zFactor: 1,
+          track3D: true
+        },
+        textureFiles: {
+          heightMap: null,
+          normalMap: null,
+          albedo: null
         }
     }
   },
@@ -206,6 +223,9 @@ export default {
     },
     progressType() {
         return (this.demErrors == null) ? "is-warning" : "is-danger";
+    },
+    track3Ddescription() {
+      return "If activated, GPX will we translated to a plane mesh, otherwise GPX track will be drawn on texture.";
     }
   },
   methods: 
@@ -245,11 +265,12 @@ export default {
       const baseUrl = process.env.VUE_APP_API_BASEURL
       let formData = new FormData();
       formData.append('file', this.gpxFile);
-      axios.post("/api/elevation/gpx/3d?dataset=" + this.requestParams.dataSet 
+      axios.post("/api/model/3d/gpx?dataset=" + this.requestParams.dataSet 
                                     + "&generateTIN=" + this.requestParams.generateTIN
                                     + "&textured=" + this.requestParams.textured
                                     + "&imageryProvider=" + this.requestParams.imageryProvider 
                                     + "&textureQuality=" + this.requestParams.textureQuality
+                                    + "&track3D=" + this.requestParams.track3D
                                     + "&format=" + this.requestParams.format
                                     + "&zFactor=" + this.requestParams.zFactor
                                     + "&clientConnectionId=" + this.$connectionId,
@@ -262,12 +283,17 @@ export default {
           }
       }
       ).then(result => {
-          this.glbFile = baseUrl + result.data;
-      })
+          var assetInfo = result.data.assetInfo;
+          this.glbFile = baseUrl + assetInfo.modelFile;
+          this.textureFiles.heightMap = assetInfo.heightMap ? process.env.VUE_APP_API_BASEURL + assetInfo.heightMap.filePath : null;
+          this.textureFiles.albedo = assetInfo.albedoTexture ? process.env.VUE_APP_API_BASEURL + assetInfo.albedoTexture.filePath : null;
+          this.textureFiles.normalMap = assetInfo.normalMapTexture ? process.env.VUE_APP_API_BASEURL + assetInfo.normalMapTexture.filePath : null;
+          this.demErrors = null; this.demErrorsActive = false;
+     })
       .catch(err=> {
           this.isLoading = false;
           this.serverProgress = "Request aborted"; 
-          this.demErrors = err.response.data;
+          this.demErrors = err.response ? err.response.data : err.message;
           this.demErrorsActive = true;
       })
     },

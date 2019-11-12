@@ -33,7 +33,6 @@
                   <div class="column" v-show="showTextureOptions">
                     <b-field label="Use imagery texture">
                         <b-switch v-model="requestParams.textured">
-                            {{ requestParams.textured }}
                         </b-switch>
                     </b-field>
                     <ImagerySelector v-show="showTextureOptionsProvider" :provider="requestParams.imageryProvider" 
@@ -50,7 +49,6 @@
                   <div class="column" v-show="false">
                     <b-field label="Generate TIN">
                         <b-switch v-model="requestParams.generateTIN">
-                            {{ requestParams.generateTIN }}
                         </b-switch>
                     </b-field>
                   </div>
@@ -58,7 +56,6 @@
                   <div class="column">
                     <b-field label="Rotate model">
                         <b-switch v-model="enableRotation">
-                            {{ enableRotation }}
                         </b-switch>
                     </b-field>
                   </div>
@@ -77,6 +74,7 @@
               
               <!-- Buttons -->
               <nav class="level is-mobile">
+                <!-- Generation -->
                 <div class="level-item has-text-centered">
                   <div>
                     <b-button @click="generateModel" :disabled="!requestParams.bbox" icon-pack="fas" icon-left="fas fa-globe-americas">
@@ -84,12 +82,40 @@
                     </b-button>
                   </div>
                 </div>
+                <!-- Textures -->
+                <div class="level-item has-text-centered">
+                  <b-dropdown hoverable aria-role="list" :disabled="!this.glbFile">
+                            <button class="button" slot="trigger">
+                                <b-icon pack="fas" icon="images"></b-icon>
+                                <span>Download textures</span>
+                            </button>
+                            <b-dropdown-item has-link aria-role="menuitem" v-if="this.textureFiles.heightMap">
+                                <a :href="this.textureFiles.heightMap" target="_blank" rel="noopener noreferrer">
+                                    <b-icon pack="fas" icon="image"></b-icon>
+                                    Height map
+                                </a>
+                            </b-dropdown-item>
+                            <b-dropdown-item has-link aria-role="menuitem" v-if="this.textureFiles.normalMap">
+                                <a :href="this.textureFiles.normalMap" target="_blank" rel="noopener noreferrer">
+                                    <b-icon pack="fas" icon="image"></b-icon>
+                                    Normal map
+                                </a>
+                            </b-dropdown-item>
+                             <b-dropdown-item has-link aria-role="menuitem" v-if="this.textureFiles.albedo">
+                                <a :href="this.textureFiles.albedo" target="_blank" rel="noopener noreferrer">
+                                    <b-icon pack="fas" icon="image"></b-icon>
+                                    Albedo (imagery)
+                                </a>
+                            </b-dropdown-item>
+                        </b-dropdown>
+                </div>
+                <!-- Download -->
                 <div class="level-item has-text-centered">
                   <div>
                     <b-button icon-pack="fas" icon-left="fas fa-download" :disabled="!this.glbFile" tag="a" :href="this.glbFile" @click="modelDownload">
                         Download model
                       </b-button>
-                    </div>
+                  </div>
                 </div>
               </nav>
 
@@ -162,7 +188,13 @@ export default {
           format: "glTF",
           zFactor: 1,
           generateTIN: false
-        }
+        },
+        textureFiles: {
+          heightMap: null,
+          normalMap: null,
+          albedo: null
+        },
+        attributions: []
     }
   },
   computed: {
@@ -210,7 +242,7 @@ export default {
       this.demErrors = null;
       this.serverProgress = "Sending request...";  
       const baseUrl = process.env.VUE_APP_API_BASEURL
-      axios.get("/api/elevation/bbox/3d/" + this.requestParams.bbox
+      axios.get("/api/model/3d/bbox/" + this.requestParams.bbox
                                     + "?dataset=" + this.requestParams.dataSet 
                                     + "&generateTIN=" + this.requestParams.generateTIN
                                     + "&textured=" + this.requestParams.textured
@@ -220,7 +252,12 @@ export default {
                                     + "&zFactor=" + this.requestParams.zFactor
                                     + "&clientConnectionId=" + this.$connectionId
       ).then(result => {
-          this.glbFile = baseUrl + result.data;
+          var assetInfo = result.data.assetInfo;
+          this.glbFile = baseUrl + assetInfo.modelFile;
+          this.textureFiles.heightMap = assetInfo.heightMap ? process.env.VUE_APP_API_BASEURL + assetInfo.heightMap.filePath : null;
+          this.textureFiles.albedo = assetInfo.albedoTexture ? process.env.VUE_APP_API_BASEURL + assetInfo.albedoTexture.filePath : null;
+          this.textureFiles.normalMap = assetInfo.normalMapTexture ? process.env.VUE_APP_API_BASEURL + assetInfo.normalMapTexture.filePath : null;
+          this.attributions = assetInfo.attributions; 
           this.demErrors = null; this.demErrorsActive = false;
       })
       .catch(err=> { 

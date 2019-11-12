@@ -115,7 +115,7 @@
         <hr class="is-medium">
 
         <!-- Imagery -->
-        <h1 class="title">Imagery providers</h1>
+        <h1 class="title" id="imagery">Imagery providers</h1>
         <article class="content">
           <b-table
             ref="tableImagery"

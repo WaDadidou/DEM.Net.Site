@@ -52,14 +52,15 @@
       <!-- Hero content: will be in the middle -->
       <div class="hero-body">
         
-        <div class="container has-text-centered">
+        <div class="container has-text-centered"> 
+         
           <b-notification v-if="initErrors" :active.sync="initErrors"
             type="is-warning"
             has-icon
             icon-pack="fas"
             aria-close-label="Close notification"
             role="alert">
-            Application cannot connect to back-end server. Please try again later.
+            Application cannot connect to back-end server. Please try again later by refreshing this page.
         </b-notification>
           <router-view />
         </div>
