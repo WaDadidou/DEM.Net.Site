@@ -4,6 +4,9 @@ import router from './router'
 import store from './store/store'
 import axios from 'axios'
 
+import vb from 'vue-babylonjs'
+Vue.use(vb);
+
 // GitHub buttons
 import VueGitHubButtons from 'vue-github-buttons'
 import 'vue-github-buttons/dist/vue-github-buttons.css';

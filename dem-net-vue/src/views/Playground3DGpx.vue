@@ -145,11 +145,18 @@
               </b-progress>
             </p>
             <div class="glbcontent">
-              <!-- <model-gltf :content="glbFile"></model-gltf> -->
+              <Scene>
+                  <Camera type="arcRotate" :radius="7.5" :beta="Math.PI / 3"></Camera>
+                  <HemisphericLight></HemisphericLight>
+                  <Asset :src="glbFile" v-if="glbFile && this.requestParams.format == 'glTF'"  :scaling="[0.02, 0.02, 0.02]" :position="[4, 0.5, 0]"></Asset>
+                  
+                </Scene>
+              <!-- <model-gltf :content="glbFile"></model-gltf> 
               <model-gltf
             background-color="#f0f0ff" :src="glbFile" v-if="glbFile && this.requestParams.format == 'glTF'" :rotation="rotation" @on-load="onLoad"></model-gltf>
             <model-stl
             background-color="#f0f0ff" :src="glbFile" v-if="glbFile && this.requestParams.format == 'STL'" :rotation="rotation" @on-load="onLoad"></model-stl>
+            -->
             </div>
             <b-loading :is-full-page="isLoadingFullPage" :active.sync="isLoading" :can-cancel="false"></b-loading>
             
@@ -166,13 +173,13 @@
 
 <script>
 import axios from 'axios'
-import { ModelGltf,ModelStl } from 'vue-3d-model'
 import DatasetSelector from '../components/DatasetSelector'
 import ImagerySelector from '../components/ImagerySelector'
+import { Asset, Camera, Scene, HemisphericLight } from 'vue-babylonjs';
 
 export default {
   name: 'Playground3DGpx',
-  components: { ModelGltf,ModelStl,DatasetSelector,ImagerySelector },
+  components: { DatasetSelector,ImagerySelector,Asset,Camera, Scene, HemisphericLight },
   mounted() {
     // Listen to server side progress events
     this.$elevationHub.$on('server-progress', this.onServerProgress);
